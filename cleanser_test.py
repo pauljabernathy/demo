@@ -153,6 +153,10 @@ class RawFightsCleanserTest(unittest.TestCase):
         self.assertEqual(fights.isnull().sum().sum(), 0)
         # Other aspects of cleansing are tested in other tests.
 
+    def test_load_and_cleanse(self):
+        fights = self.cleanser.load_and_cleanse('raw_total_fight_data.csv', sep=';')
+        self.assertEqual(fights.shape[0], 5144)
+
 
 if __name__ == '__main__':
     unittest.main()

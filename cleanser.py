@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-# TODO: This might not need to be in a class
+# TODO: Make this not a class, but a module for utilities functions.
 # TODO: "Cleanser" might not be the best name.
 
 ATTEMPT = '_att'
@@ -124,6 +124,22 @@ class RawFightsCleanser:
         # Return is not technically necessary, but I always prefer returning something from almost any function.
         return df
 
+    def find_loser(self, row):
+        if row.winner == row.r_fighter:
+            return row.b_fighter
+        elif row.winner == row.b_fighter:
+            return row.r_fighter
+        else:
+            return 'None'
+
+    def winner_b_r(self, row):
+        if row['winner'] == row.r_fighter:
+            return 'r'
+        elif row['winner'] == row.b_fighter:
+            return 'b'
+        else:
+            return 'None'
+
     def cleanse(self, fights):
         """
         Calls the cleansing functions in one function call.
@@ -133,7 +149,8 @@ class RawFightsCleanser:
         fights = self.cleanse_column_names(fights)
         fights = self.split_composite_columns(fights)
         fights = fights.replace(np.NaN, 'None')
-
+        fights['loser'] = fights.apply(self.find_loser, axis=1)
+        fights['r_b_winner'] = fights.apply(lambda row: self.winner_b_r(row), axis=1)
         return fights
 
     def load_and_cleanse(self, filename, sep):
