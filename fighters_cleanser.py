@@ -6,6 +6,7 @@ from datetime import datetime
 import re
 import constants
 import utils
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 
 # TODO: Decide if this and the other cleanser really should be classes, since the functions are all in effect static.
@@ -155,7 +156,7 @@ def add_records_for_row(row, fights):
     return row
 
 
-def add_fictitious_records(fights, prior_wins=constants.DEFAULT_PRIOR_WINS, prior_losses=constants.DEFAULT_PRIOR_LOSSES,
+def compute_prior_records(fights, prior_wins=constants.DEFAULT_PRIOR_WINS, prior_losses=constants.DEFAULT_PRIOR_LOSSES,
                            prior_ties=constants.DEFAULTPRIOR_TIES):
     fights['r_prior_wins'] = 0
     fights['r_prior_losses'] = 0
@@ -164,6 +165,11 @@ def add_fictitious_records(fights, prior_wins=constants.DEFAULT_PRIOR_WINS, prio
     fights['b_prior_losses'] = 0
     fights['b_prior_ties'] = 0
     fights = fights.apply(lambda row: add_records_for_row(row, fights), axis=1)
+    return fights
+
+
+def add_fictitious_records(fights, prior_wins=constants.DEFAULT_PRIOR_WINS, prior_losses=constants.DEFAULT_PRIOR_LOSSES,
+                           prior_ties=constants.DEFAULTPRIOR_TIES):
     fights['r_prior_wins'] += prior_wins
     fights['b_prior_wins'] += prior_wins
     fights.r_prior_losses += prior_losses
@@ -183,7 +189,31 @@ def find_win_loss_tie_pct(fights):
     fights['b_win_pct'] = fights.b_prior_wins / fights.b_total_fights
     fights['b_loss_pct'] = fights.b_prior_losses / fights.b_total_fights
     fights['b_tie_pct'] = fights.b_prior_ties / fights.b_total_fights
+    fights['r_wldiff_pct'] = fights.r_win_pct - fights.r_loss_pct
+    fights['b_wldiff_pct'] = fights.b_win_pct - fights.b_loss_pct
     return fights
+
+
+def recompute_records(fights_0, pretend_wins, pretend_losses, pretend_ties):
+    fights = fights_0.copy()
+    # fights = compute_prior_records(fights)
+    fights = add_fictitious_records(fights, pretend_wins, pretend_losses, pretend_ties)
+    fights = find_win_loss_tie_pct(fights)
+    columns_to_use = ['r_fighter', 'b_fighter', 'date', 'loser', 'winner', 'r_prior_wins', 'r_prior_losses',
+                      'r_prior_ties', 'b_prior_wins', 'b_prior_losses', 'b_prior_ties', 'r_total_fights',
+                      'b_total_fights', 'r_win_pct', 'r_loss_pct', 'r_tie_pct', 'b_win_pct', 'b_loss_pct',
+                      'b_tie_pct', 'r_wldiff_pct', 'b_wldiff_pct', 'r_b_winner']
+    fights = fights[columns_to_use]
+    return fights
+
+
+def predict(fights_0, num_pretend_wins, num_pretend_losses, num_pretend_ties):
+    fights = recompute_records(fights_0, num_pretend_wins, num_pretend_losses, num_pretend_ties)
+    # fights['guess'] = fights.apply(lambda row: 'r' if row.r_wldiff_pct > row.b_wldiff_pct else 'b', axis=1)
+    fights['guess'] = fights.apply(lambda row: 'r' if row.r_wldiff_pct > row.b_wldiff_pct else (
+        'b' if row.r_wldiff_pct < row.b_wldiff_pct else np.random.choice(['r', 'b'])), axis=1)
+    print(accuracy_score(fights.r_b_winner, fights.guess))
+    print(confusion_matrix(fights.r_b_winner, fights.guess))
 
 
 def load_and_cleanse(fighters_file_name):
@@ -228,5 +258,53 @@ def load_cleanse_and_merge(fighters_file_name, fights_file_name):
     return combined
 
 
+def run_the_whole_thing_once(num_fictitious_wins, num_fictitious_losses, num_fictitious_ties):
+    fights_0 = load_cleanse_and_merge(constants.DEFAULT_FIGHTERS_FILE_NAME, constants.DEFAULT_FIGHTS_FILE_NAME)
+    fights_0 = compute_prior_records(fights_0)
+    fights = fights_0.copy()
+    """fights = compute_prior_records(fights)
+    fights = add_fictitious_records(fights)
+    fights = find_win_loss_tie_pct(fights)"""
+    fights = recompute_records(fights_0, num_fictitious_wins, num_fictitious_losses, num_fictitious_ties)
+    z = "Z"
+
+
+def predict(fights_0, num_pretend_wins, num_pretend_losses, num_pretend_ties):
+    #print("prediction with ", num_pretend_wins, ", ", num_pretend_losses, ", ", num_pretend_ties)
+    print(f"prediction with {num_pretend_wins}, {num_pretend_losses}, {num_pretend_ties}")
+    fights = recompute_records(fights_0, num_pretend_wins, num_pretend_losses, num_pretend_ties)
+    # fights['guess'] = fights.apply(lambda row: 'r' if row.r_wldiff_pct > row.b_wldiff_pct else 'b', axis=1)
+    #fights['guess'] = fights.apply(lambda row: 'r' if row.r_wldiff_pct > row.b_wldiff_pct else (
+    #    'b' if row.r_wldiff_pct < row.b_wldiff_pct else np.random.choice(['r', 'b'])), axis=1)
+    fights['guess'] = fights.apply(lambda row: 'r' if row.r_win_pct > row.b_win_pct else (
+        'b' if row.r_win_pct < row.b_win_pct else np.random.choice(['r', 'b'])), axis=1)
+    print(accuracy_score(fights.r_b_winner, fights.guess))
+    print(confusion_matrix(fights.r_b_winner, fights.guess))
+
+
+def do_predictions_for_diff_ficticitous_fights():
+    fights_0 = load_cleanse_and_merge(constants.DEFAULT_FIGHTERS_FILE_NAME, constants.DEFAULT_FIGHTS_FILE_NAME)
+    fights_0 = compute_prior_records(fights_0)
+    predict(fights_0, 0, 0, 0)
+    predict(fights_0, 1, 1, 0)
+    predict(fights_0, 2, 2, 0)
+    predict(fights_0, 3, 3, 0)
+    predict(fights_0, 4, 4, 0)
+    predict(fights_0, 4, 4, 1)
+    predict(fights_0, 5, 5, 0)
+    predict(fights_0, 5, 5, 1)
+    predict(fights_0, 6, 6, 0)
+    predict(fights_0, 6, 6, 1)
+    predict(fights_0, 6, 6, 2)
+    predict(fights_0, 6, 6, 3)
+    predict(fights_0, 7, 7, 1)
+    predict(fights_0, 7, 7, 2)
+    predict(fights_0, 7, 7, 3)
+
+
 if __name__ == '__main__':
-    load_cleanse_and_merge(constants.DEFAULT_FIGHTERS_FILE_NAME, constants.DEFAULT_FIGHTS_FILE_NAME)
+    '''fights = load_cleanse_and_merge(constants.DEFAULT_FIGHTERS_FILE_NAME, constants.DEFAULT_FIGHTS_FILE_NAME)
+    fights = compute_prior_records(fights)
+    fights = add_fictitious_records(fights)
+    z = "Z"'''
+    do_predictions_for_diff_ficticitous_fights()
