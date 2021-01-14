@@ -1,6 +1,7 @@
 This repo is intended to be a demo of some Machine Learning concepts I have learned.
 
-Right now, the only thing I have working is the small <a href="/diabetes_presentation.ipynb">diabetes presentation</a>.  It is a
+Right now, the only thing I have working is the small <a href="/diabetes/diabetes_presentation.ipynb">diabetes
+ presentation</a>.  It is a
  short notebook about a rather small study, but it does contain training and testing of Logistic Regression, Random
   Forest, and Neural Network models.
 
