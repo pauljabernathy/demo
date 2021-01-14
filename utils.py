@@ -47,3 +47,11 @@ def get_prior_record_summary(fighter_name, fights_df, date):
         summary['win loss ratio'] = 0
     return summary
 
+
+def linear_scale_column(column):
+    column = pd.Series(column)  # make sure it is a series so we can do a vectorized operation
+    min = column.min()
+    max = column.max()
+    #column = column.apply(lambda n: (n - max) / (max - min) + 1)
+    column = column.apply(lambda n: (n - min) / (max - min))
+    return column

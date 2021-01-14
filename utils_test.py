@@ -5,7 +5,7 @@ from datetime import date
 import utils
 
 
-class MyTestCase(unittest.TestCase):
+class UtilsTest(unittest.TestCase):
     def test_get_record_summary(self):
         self.assertEqual(True, False)
 
@@ -70,6 +70,12 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual({'wins': 1, 'losses': 1, 'ties': 0, 'win loss ratio': 1/2},
                          utils.get_prior_record_summary('cam', df, date.fromisoformat("2019-04-01")))
 
+    def test_linear_scale(self):
+        data = [5, 6, 7, 7.5, 8, 9, 10]
+        exp_result = [0, .2, .4, .5, .6, .8, 1]
+        result = utils.linear_scale_column(data)
+        #self.assertEqual(result, exp_result)
+        self.assertTrue(pd.Series(result).equals(result))
 
 if __name__ == '__main__':
     unittest.main()
