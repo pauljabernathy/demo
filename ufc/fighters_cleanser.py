@@ -2,12 +2,10 @@ import pandas as pd
 import numpy as np
 from cleanser import RawFightsCleanser
 from dateutil import parser
-from datetime import datetime
 import re
 import constants
 import utils
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
-
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 # TODO: Decide if this and the other cleanser really should be classes, since the functions are all in effect static.
 # Let's try it with being a class.
@@ -15,6 +13,17 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 
  #   def __init_(self):
  #       self.fights_cleanser = RawFightsCleanser()
+
+BINARY_COMPARISONS = {
+    ('r_prior_wins', 'b_prior_wins'): 'r_more_wins', ('r_prior_losses', 'b_prior_losses'): 'r_more_wins'
+}
+
+BINARY_COMPARISON_COLUMN_ROOTS = ['prior_wins', 'prior_losses', 'win_pct', 'prior_loss_pct', 'height', 'weight',
+                                  'reach', 'age',
+                                  ]
+
+OPTIMUM_AGE = 29.6
+
 fights_cleanser = RawFightsCleanser()
 
 def cleanse_column_names(fighters):
@@ -138,6 +147,7 @@ def scale_column(column):
     return column
 
 
+
 def scale_columns(df, columns):
     for column in columns:
         df[column] = scale_column(df[column])
@@ -157,7 +167,7 @@ def add_records_for_row(row, fights):
 
 
 def compute_prior_records(fights, prior_wins=constants.DEFAULT_PRIOR_WINS, prior_losses=constants.DEFAULT_PRIOR_LOSSES,
-                           prior_ties=constants.DEFAULTPRIOR_TIES):
+                          prior_ties=constants.DEFAULT_PRIOR_TIES):
     fights['r_prior_wins'] = 0
     fights['r_prior_losses'] = 0
     fights['r_prior_ties'] = 0
@@ -169,7 +179,7 @@ def compute_prior_records(fights, prior_wins=constants.DEFAULT_PRIOR_WINS, prior
 
 
 def add_fictitious_records(fights, prior_wins=constants.DEFAULT_PRIOR_WINS, prior_losses=constants.DEFAULT_PRIOR_LOSSES,
-                           prior_ties=constants.DEFAULTPRIOR_TIES):
+                           prior_ties=constants.DEFAULT_PRIOR_TIES):
     fights['r_prior_wins'] += prior_wins
     fights['b_prior_wins'] += prior_wins
     fights.r_prior_losses += prior_losses
@@ -204,6 +214,61 @@ def recompute_records(fights_0, pretend_wins, pretend_losses, pretend_ties):
                       'b_total_fights', 'r_win_pct', 'r_loss_pct', 'r_tie_pct', 'b_win_pct', 'b_loss_pct',
                       'b_tie_pct', 'r_wldiff_pct', 'b_wldiff_pct', 'r_b_winner']
     fights = fights[columns_to_use]
+    return fights
+
+
+def find_binary_comparisons(fights_0):
+    fights = fights_0.copy()
+    fights['r_more_prior_wins'] = fights.apply(lambda row: 1 if row.r_prior_wins > row.b_prior_wins else (
+        0 if row.r_prior_wins == row.b_prior_wins else -1))
+    fights['r_more_prior_wins'] = fights.apply(lambda row: 1 if row.r_prior_wins > row.b_prior_wins else (
+        0 if row.r_prior_wins == row.b_prior_wins else -1))
+    fights['r_more_prior_wins'] = fights.apply(lambda row: 1 if row.r_prior_wins > row.b_prior_wins else (
+        0 if row.r_prior_wins == row.b_prior_wins else -1))
+    fights['r_more_prior_wins'] = fights.apply(lambda row: 1 if row.r_prior_wins > row.b_prior_wins else (
+        0 if row.r_prior_wins == row.b_prior_wins else -1))
+
+
+def find_binary_comparison_columns():
+    columns = []
+    for stem in BINARY_COMPARISON_COLUMN_ROOTS:
+        columns.append(stem + "_adv")
+    return columns
+
+
+def add_advantage_columns(fights):
+    """
+    adds columns that show if r has an advantage (according to what I think is an advantage) for certain personal
+    attributes
+    :param fights:
+    :return:
+    """
+    # columns = find_binary_comparison_columns()
+    """
+    BINARY_COMPARISON_COLUMN_ROOTS = ['prior_wins', 'prior_losses', 'prior_win_pct', 'prior_loss_pct', 'height', 'weight',
+                                  'reach', 'age',
+                                  ]
+    """
+    fights['height_adv'] = fights.apply(lambda row: 1 if row.r_height > row.b_height else 0, axis=1)
+    fights['weight_adv'] = fights.apply(lambda row: 1 if row.r_weight > row.b_weight else 0, axis=1)  # good comparison
+    fights['reach_adv'] = fights.apply(lambda row: 1 if row.r_reach > row.b_reach else 0, axis=1)
+    fights['age_adv'] = fights.apply(lambda row: 1 if abs(row.r_age - OPTIMUM_AGE) < abs(row.b_age - OPTIMUM_AGE) else
+    0, axis=1)
+    # doing closeer to the age where most fights are won rather (around 29 1/2) than simply older vs younger
+    return fights
+
+
+def add_record_advantage_columns(fights):
+    """
+    adds yes/no columns to say if red has and "advantage" in records, in terms of being considered more likely to win
+    :param fights:
+    :return:
+    """
+    fights['prior_wins_adv'] = fights.apply(lambda row: 1 if row.r_prior_wins > row.b_prior_wins else 0, axis=1)
+    fights['prior_losses_adv'] = fights.apply(lambda row: 1 if row.r_prior_losses < row.b_prior_losses else 0, axis=1)
+    fights['win_pct_adv'] = fights.apply(lambda row: 1 if row.r_win_pct > row.b_win_pct else 0, axis=1)
+    #fights['loss_pct_adv'] = fights.apply(lambda row: 1 if row.r_loss_pct < row.b_loss_pct else 0, axis=1)
+    # TODO:  handing of wins and losses here is a little simplistics
     return fights
 
 

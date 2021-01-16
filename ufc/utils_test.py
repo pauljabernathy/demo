@@ -50,7 +50,7 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual({'wins': 2, 'losses': 2, 'ties': 0, 'win loss ratio': 1/2}, summary)
 
         self.assertEqual({'wins': 1, 'losses': 0, 'ties': 0, 'win loss ratio': 1.0},
-                           utils.get_prior_record_summary('bob', df, date.fromisoformat("2019-02-01")))
+                         utils.get_prior_record_summary('bob', df, date.fromisoformat("2019-02-01")))
         self.assertEqual({'wins': 0, 'losses': 0, 'ties': 0, 'win loss ratio': 0},
                          utils.get_prior_record_summary('alice', df, date.fromisoformat("2019-02-01")))
         self.assertEqual({'wins': 0, 'losses': 1, 'ties': 0, 'win loss ratio': 0.0},

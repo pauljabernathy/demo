@@ -3,9 +3,8 @@ from keras.utils import to_categorical
 from keras.models import Sequential
 from keras.layers import Dense
 import numpy as np
-import tensorflow as tf
 import pandas as pd
-
+from sklearn.metrics import confusion_matrix, accuracy_score
 DEFAULT_NUM_EPOCHS = 100
 
 
@@ -14,8 +13,10 @@ class DNNAnalyzer(AnalyzerBase):
     def print_gpu_blather(self):
         from tensorflow.python.client import device_lib
         print(device_lib.list_local_devices())
-        physical_devices = tf.config.list_physical_devices('GPU')
-        print(physical_devices)
+        #physical_devices = tf.config.list_physical_devices('GPU')
+        #print(physical_devices)
+        # tf.config.list_physical_devices('GPU') is giving an error message
+        # The version of tensorflow I am using seems to no longer have that.
 
     def run_analysis(self, model, num_epochs=DEFAULT_NUM_EPOCHS, x_columns=None, y_column=None):
         if x_columns is not None and y_column is not None:

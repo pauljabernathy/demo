@@ -1,5 +1,6 @@
 from analyzer_base import *
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 
 
 class LogisticRegressionAnalyzer(AnalyzerBase):
