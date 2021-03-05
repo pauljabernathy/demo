@@ -1,6 +1,6 @@
 This repo is intended to be a demo of some Machine Learning concepts I have learned.
 
-Right now, it contains two projects:
+Right now, it contains three projects:
 
 * the small <a href="diabetes/diabetes_presentation.ipynb">diabetes
  presentation</a>.  It is a
@@ -11,12 +11,13 @@ Right now, it contains two projects:
 So far, the best pre fight predictions I have been able to make are right about 60% of the time - better than chance but less accurate that the human odds makers, who were right about 67% of the time.  
 Predictions of the winner based on data collected through the fight is much better (82 - 84 %), but that is an easier
  question.
+ 
+ * a project with a <a href="monte">few small monte carlo simulations</a>, which have become an interest of mine
 
 
 Upcoming changes:
 
 * revisions to the UFC pages to make them easier to read
-* at least one monte carlo simulation
-* hopefully an analysis of US Presidential Election data to look at how the results would be different if electors
+* (planned) an analysis of US Presidential Election data to look at how the results would be different if electors
  were aggragated at the Congressional District level rather than the state level
 
